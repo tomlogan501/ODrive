@@ -3,18 +3,18 @@ import can
 import cantools
 import time
 
-db = cantools.database.load_file("odrive-cansimple.dbc")
-# print(db)
+# db = cantools.database.load_file("odrive-cansimple.dbc")
+#print(db)
 
 # bus = can.Bus("vcan0", bustype="virtual")
 bus = can.Bus("can0", bustype="socketcan")
-axisID = 0x1
+axisID = 0x7
 
 print("\nRequesting AXIS_STATE_FULL_CALIBRATION_SEQUENCE (0x03) on axisID: " + str(axisID))
-msg = db.get_message_by_name('Set_Axis_State')
+msg = db.get_message_by_name('Axis'+str(axisID)+'_Set_Axis_State')
 data = msg.encode({'Axis_Requested_State': 0x03})
 msg = can.Message(arbitration_id=msg.frame_id | axisID << 5, is_extended_id=False, data=data)
-print(db.decode_message('Set_Axis_State', msg.data))
+print(db.decode_message('Axis'+str(axisID)+'_Set_Axis_State', msg.data))
 print(msg)
 
 try:
@@ -26,15 +26,18 @@ except can.CanError:
 print("Waiting for calibration to finish...")
 # Read messages infinitely and wait for the right ID to show up
 while True:
+    print("-")
     msg = bus.recv()
-    if msg.arbitration_id == ((axisID << 5) | db.get_message_by_name('Heartbeat').frame_id):
+    print("+")
+    if msg.arbitration_id == ((axisID << 5) | db.get_message_by_name('Axis'+str(axisID)+'_Heartbeat').frame_id):
+        print("/")
         current_state = db.decode_message('Heartbeat', msg.data)['Axis_State']
         if current_state == 0x1:
             print("\nAxis has returned to Idle state.")
             break
 
 for msg in bus:
-    if msg.arbitration_id == ((axisID << 5) | db.get_message_by_name('Heartbeat').frame_id):
+    if msg.arbitration_id == ((axisID << 5) | db.get_message_by_name('Axis'+str(axisID)+'_Heartbeat').frame_id):
         errorCode = db.decode_message('Heartbeat', msg.data)['Axis_Error']
         if errorCode == 0x00:
             print("No errors")
