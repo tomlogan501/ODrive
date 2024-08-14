@@ -1,7 +1,7 @@
 import can
 
 bus = can.Bus("can0", bustype="socketcan")
-axisID = 0x1
+axisID = 0x7
 
 print("Requesting AXIS_STATE_FULL_CALIBRATION_SEQUENCE (0x03) on axisID: " + str(axisID))
 msg = can.Message(arbitration_id=axisID << 5 | 0x07, data=[3, 0, 0, 0, 0, 0, 0, 0], dlc=8, is_extended_id=False)
